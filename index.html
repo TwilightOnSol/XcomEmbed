@@ -1,40 +1,10 @@
-export default async function handler(req, res) {
-  const { url = 'https://x.com/' } = req.query;
-  if (!url.startsWith('https://x.com/')) {
-    return res.status(400).send('Only X.com URLs allowed');
-  }
-  try {
-    const response = await fetch(url, {
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
-        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-        'Accept-Language': 'en-US,en;q=0.5',
-        'Accept-Encoding': 'gzip, deflate',
-        'Connection': 'keep-alive',
-      }
-    });
-    let html = await response.text();
-    
-    // Rewrite relative URLs to absolute proxy paths
-    html = html.replace(/(src|href)=["']\/([^\/"]+)["']/g, `$1="${url.split('/')[0] + '//' + req.headers.host}/api/embed?url=${url}/$2"`);
-    html = html.replace(/("|'|`)\/x([^\/"]+)("|'|`)/g, `$1${url}/x$2$3`);
-    
-    // Relax CSP for full app functionality
-    html = html.replace(/<head>/i, `<head>
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline' 'unsafe-eval' https://x.com *.x.com https:; frame-ancestors 'self' *.notion.so *.vercel.app; connect-src 'self' https: wss:;">
-    <base href="https://x.com/">`);
-    
-    // Proxy asset requests too
-    if (url !== 'https://x.com/') {
-      const assetResponse = await fetch(url);
-      html = await assetResponse.text();
-    }
-    
-    res.setHeader('Content-Type', 'text/html');
-    res.setHeader('Access-Control-Allow-Origin', '*');
-    res.setHeader('X-Frame-Options', 'ALLOWALL');
-    res.send(html);
-  } catch (error) {
-    res.status(500).send('Proxy error: ' + error.message);
-  }
-}
+<!DOCTYPE html>
+<html>
+<head>
+  <script type="module" src="https://unpkg.com/x-frame-bypass@latest/x-frame-bypass.js?module"></script>
+  <style>body, iframe { width: 100vw; height: 100vh; margin: 0; border: none; }</style>
+</head>
+<body>
+  <iframe is="x-frame-bypass" src="https://x.com"></iframe>
+</body>
+</html>

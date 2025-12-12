@@ -1,31 +1,74 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <script type="module" src="https://unpkg.com/x-frame-bypass@latest/x-frame-bypass.js?module"></script>
+  <title>Google CORS Test - Working Proxies</title>
   <style>
-    body { margin: 0; font-family: Arial, sans-serif; }
-    iframe { width: 100vw; height: 80vh; border: none; }
-    #api-data { padding: 20px; height: 20vh; overflow: auto; background: #f5f5f5; }
+    body { font-family: Arial, sans-serif; margin: 20px; background: #f5f5f5; }
+    #output { padding: 20px; background: white; border-radius: 10px; margin: 20px 0; max-height: 300px; overflow: auto; border-left: 5px solid #007bff; }
+    button { margin: 10px; padding: 12px 20px; border: none; border-radius: 6px; background: #28a745; color: white; cursor: pointer; font-size: 16px; }
+    button:hover { background: #218838; }
+    button:disabled { background: #6c757d; cursor: not-allowed; }
+    iframe { width: 100%; height: 400px; border: none; border-radius: 10px; margin-top: 20px; }
   </style>
 </head>
 <body>
-  <div id="api-data">
-    <h3>API Data via cors.io:</h3>
-    <pre id="output">Loading...</pre>
-  </div>
-  <iframe is="x-frame-bypass" src="https://x.com"></iframe>
+  <h1>🧪 Google CORS Proxy Test</h1>
+  
+  <div id="output">Click buttons to test Google APIs through proxies...</div>
+  
+  <h3>Google Test Endpoints:</h3>
+  <button onclick="testGoogle('search')">Google Search JSON</button>
+  <button onclick="testGoogle('news')">Google News</button>
+  <button onclick="testGoogle('custom')">Custom Google URL</button>
+  
+  <h3>Your X.com iframe (still working):</h3>
+  <iframe src="https://x.com" style="height:400px;"></iframe>
 
   <script>
-    // Fetch example using cors.io to bypass CORS
-    fetch('https://cors.io/?u=https://api.github.com/users/octocat')
-      .then(response => response.json())
-      .then(data => {
-        document.getElementById('output').textContent = 
-          `Name: ${data.name}\nLogin: ${data.login}\nBio: ${data.bio || 'N/A'}`;
-      })
-      .catch(error => {
-        document.getElementById('output').textContent = 'Error: ' + error.message;
-      });
+    async function testGoogle(type) {
+      const output = document.getElementById('output');
+      const buttons = document.querySelectorAll('button');
+      buttons.forEach(btn => btn.disabled = true);
+      
+      let apiUrl;
+      if (type === 'search') apiUrl = 'https://www.google.com/search?q=weather&tbm=nws';
+      else if (type === 'news') apiUrl = 'https://news.google.com/rss';
+      else {
+        apiUrl = prompt('Enter Google URL:') || 'https://www.google.com';
+      }
+      
+      output.innerHTML = `<strong>Testing ${type}:</strong><br>${apiUrl}`;
+      
+      // Test 5 working proxies
+      const proxies = [
+        { name: 'corsproxy.io', url: `https://corsproxy.io/?${encodeURIComponent(apiUrl)}` },
+        { name: 'allorigins.win', url: `https://api.allorigins.win/get?url=${encodeURIComponent(apiUrl)}` },
+        { name: 'thingproxy', url: `https://thingproxy.freeboard.io/fetch/${apiUrl}` },
+        { name: 'corsproxy2', url: `https://corsproxy2.corsproxy.io/?${encodeURIComponent(apiUrl)}` },
+        { name: 'api.allorigins', url: `https://api.allorigins.win/raw?url=${encodeURIComponent(apiUrl)}` }
+      ];
+      
+      for (let proxy of proxies) {
+        try {
+          output.innerHTML += `<br><br>🔄 Testing <strong>${proxy.name}</strong>...`;
+          
+          const response = await fetch(proxy.url, { mode: 'cors' });
+          const text = await response.text();
+          
+          output.innerHTML += `<br>✅ <strong>${proxy.name}</strong> SUCCESS! <br><pre style="background:#e8f5e8;padding:10px;border-radius:5px;font-size:12px;">${text.substring(0, 500)}...</pre>`;
+          buttons.forEach(btn => btn.disabled = false);
+          return; // First working proxy wins
+        } catch (error) {
+          output.innerHTML += `<br>❌ ${proxy.name}: ${error.message}`;
+        }
+      }
+      
+      output.innerHTML += `<br><br>💥 All proxies failed. Try a different Google endpoint.`;
+      buttons.forEach(btn => btn.disabled = false);
+    }
+    
+    // Auto-test on load
+    window.onload = () => testGoogle('search');
   </script>
 </body>
 </html>

@@ -2,9 +2,30 @@
 <html>
 <head>
   <script type="module" src="https://unpkg.com/x-frame-bypass@latest/x-frame-bypass.js?module"></script>
-  <style>body, iframe { width: 100vw; height: 100vh; margin: 0; border: none; }</style>
+  <style>
+    body { margin: 0; font-family: Arial, sans-serif; }
+    iframe { width: 100vw; height: 80vh; border: none; }
+    #api-data { padding: 20px; height: 20vh; overflow: auto; background: #f5f5f5; }
+  </style>
 </head>
 <body>
+  <div id="api-data">
+    <h3>API Data via cors.io:</h3>
+    <pre id="output">Loading...</pre>
+  </div>
   <iframe is="x-frame-bypass" src="https://x.com"></iframe>
+
+  <script>
+    // Fetch example using cors.io to bypass CORS
+    fetch('https://cors.io/?u=https://api.github.com/users/octocat')
+      .then(response => response.json())
+      .then(data => {
+        document.getElementById('output').textContent = 
+          `Name: ${data.name}\nLogin: ${data.login}\nBio: ${data.bio || 'N/A'}`;
+      })
+      .catch(error => {
+        document.getElementById('output').textContent = 'Error: ' + error.message;
+      });
+  </script>
 </body>
 </html>
